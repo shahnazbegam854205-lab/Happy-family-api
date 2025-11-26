@@ -55,30 +55,30 @@ export default async function handler(req, res) {
 
     let idsToProcess = [];
 
-    // 🔄 STEP 1: New API for number information (replaced splexso)
+    // 🔄 STEP 1: New API for number information (replaced danger API)
     if (number && !aadhaarInput) {
-      const numberInfoUrl = `https://danger-vip-key.shop/api.php?key=Cyber&number=${encodeURIComponent(number)}`;
+      const numberInfoUrl = `https://ox-tawny.vercel.app/search_mobile?mobile=${encodeURIComponent(number)}&api_key=gavravrandigey`;
       const rNumberInfo = await fetchWithTimeout(numberInfoUrl);
 
       if (rNumberInfo.ok && rNumberInfo.data) {
         const apiData = rNumberInfo.data;
         
-        // Response format: Array of objects with mobile, name, fname, address, alt, circle, id, etc.
-        if (Array.isArray(apiData) && apiData.length) {
-          resultData.number_info = apiData.map(d => ({
+        // New API response format: { data: Array of objects }
+        if (apiData && Array.isArray(apiData.data) && apiData.data.length) {
+          resultData.number_info = apiData.data.map(d => ({
             name: d.name || "",
             fname: d.fname || "",
             address: d.address || "",
             alt: d.alt || "",
             circle: d.circle || "",
-            id: d.id || d.uid || "",  // id ya uid se Aadhaar ID
+            id: d.id || "",  // Aadhaar ID
             mobile: d.mobile || "",
             email: d.email || "",
-            uid: d.uid || ""
+            uid: d.id || ""  // Using id as uid
           }));
           
-          // 🔥 IMPORTANT: Aadhaar IDs extract karo (id aur uid fields se)
-          const allIds = apiData.flatMap(d => [d.id, d.uid]).filter(Boolean);
+          // 🔥 IMPORTANT: Aadhaar IDs extract karo (id field se)
+          const allIds = apiData.data.map(d => d.id).filter(Boolean);
           idsToProcess = uniqStrings(allIds);
         }
       }

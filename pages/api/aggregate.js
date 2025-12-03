@@ -38,6 +38,7 @@ export default async function handler(req, res) {
 
     const ALLAPI_KEY = process.env.ALLAPI_KEY || "DEMOKEY";
     const RATION_KEY = process.env.RATION_KEY || "paidchx";
+    const SPLEXXO_KEY = process.env.SPLEXXO_KEY || "SPLEXXO";
 
     if (!number && !aadhaarInput) {
       return res.status(400).json({
@@ -55,30 +56,31 @@ export default async function handler(req, res) {
 
     let idsToProcess = [];
 
-    // 🔄 STEP 1: New API for number information (replaced danger API)
+    // 🔄 STEP 1: New Splexxo API for number information
     if (number && !aadhaarInput) {
-      const numberInfoUrl = `https://ox-tawny.vercel.app/search_mobile?mobile=${encodeURIComponent(number)}&api_key=gavravrandigey`;
+      const numberInfoUrl = `https://splexxo-bhai.vercel.app/api/seller?mobile=${encodeURIComponent(number)}&key=${encodeURIComponent(SPLEXXO_KEY)}`;
       const rNumberInfo = await fetchWithTimeout(numberInfoUrl);
 
-      if (rNumberInfo.ok && rNumberInfo.data) {
+      if (rNumberInfo.ok && rNumberInfo.data && rNumberInfo.data.success) {
         const apiData = rNumberInfo.data;
         
-        // New API response format: { data: Array of objects }
-        if (apiData && Array.isArray(apiData.data) && apiData.data.length) {
-          resultData.number_info = apiData.data.map(d => ({
+        // Splexxo API response format: { success: true, result: Array }
+        if (apiData && Array.isArray(apiData.result) && apiData.result.length) {
+          resultData.number_info = apiData.result.map(d => ({
             name: d.name || "",
-            fname: d.fname || "",
+            fname: d.father_name || "",
             address: d.address || "",
-            alt: d.alt || "",
+            alt: d.alt_mobile || "",
             circle: d.circle || "",
-            id: d.id || "",  // Aadhaar ID
+            id: d.id_number || "",  // Aadhaar ID
             mobile: d.mobile || "",
             email: d.email || "",
-            uid: d.id || ""  // Using id as uid
+            uid: d.id_number || "",  // Using id_number as uid
+            id_db: d.id || ""  // Database ID from splexxo
           }));
           
-          // 🔥 IMPORTANT: Aadhaar IDs extract karo (id field se)
-          const allIds = apiData.data.map(d => d.id).filter(Boolean);
+          // 🔥 IMPORTANT: Aadhaar IDs extract karo (id_number field se)
+          const allIds = apiData.result.map(d => d.id_number).filter(Boolean);
           idsToProcess = uniqStrings(allIds);
         }
       }
